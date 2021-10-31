@@ -56,7 +56,6 @@ export class Client {
     req.id = this.#id;
     req.jsonrpc = "2.0";
     const body = JSON.stringify(req);
-    console.log(body);
     await this.conn.write(this.encoder.encode(body));
     this.#id++;
     return this.readResponse();
