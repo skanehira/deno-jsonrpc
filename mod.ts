@@ -35,7 +35,8 @@ export class Client {
     this.decoder = new TextDecoder();
   }
 
-  private async readResponse<T>(): Promise<Response<T>> {
+  // returns response body as a string
+  private async readResponseBody(): Promise<string> {
     const cap = 1024;
     const p = new Uint8Array(cap);
     const buf = new io.Buffer();
@@ -52,7 +53,17 @@ export class Client {
     }
 
     const body = this.decoder.decode(buf.bytes());
+    return body;
+  }
+
+  private async readResponse<T>(): Promise<Response<T>> {
+    const body = await this.readResponseBody();
     return JSON.parse(body) as Response<T>;
+  }
+
+  private async readBatchResponse<T>(): Promise<Response<T>[]> {
+    const body = await this.readResponseBody();
+    return JSON.parse(body) as Response<T>[];
   }
 
   async Request<T>(req: Request): Promise<Response<T>> {
@@ -65,13 +76,20 @@ export class Client {
   }
 
   async Notify(req: Notify): Promise<void> {
-    try {
+    req.jsonrpc = "2.0";
+    const body = JSON.stringify(req);
+    await this.conn.write(this.encoder.encode(body));
+  }
+
+  async Batch<T>(...reqs: Request[]): Promise<Response<T>[]> {
+    const body = JSON.stringify(reqs.map((req) => {
       req.jsonrpc = "2.0";
-      const body = JSON.stringify(req);
-      await this.conn.write(this.encoder.encode(body));
-    } catch (e) {
-      console.error(e);
-    }
+      req.id = this.#id;
+      this.#id++;
+      return req;
+    }));
+    await this.conn.write(this.encoder.encode(body));
+    return this.readBatchResponse<T>();
   }
 
   close() {
