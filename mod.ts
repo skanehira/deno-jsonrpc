@@ -1,10 +1,13 @@
 import { io } from "./deps.ts";
 
-export interface Request {
+export interface Notify {
   jsonrpc?: "2.0";
-  id?: number;
   method: string;
   params?: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+
+export interface Request extends Notify {
+  id?: number;
 }
 
 export interface Error {
@@ -14,7 +17,7 @@ export interface Error {
 }
 
 export interface Response<T> {
-  readonly jsonrpc: "2.0";
+  jsonrpc: "2.0";
   result?: T;
   error?: Error;
 }
@@ -33,7 +36,7 @@ export class Client {
   }
 
   private async readResponse<T>(): Promise<Response<T>> {
-    const cap = 128;
+    const cap = 1024;
     const p = new Uint8Array(cap);
     const buf = new io.Buffer();
     while (1) {
@@ -59,6 +62,16 @@ export class Client {
     await this.conn.write(this.encoder.encode(body));
     this.#id++;
     return this.readResponse();
+  }
+
+  async Notify(req: Notify): Promise<void> {
+    try {
+      req.jsonrpc = "2.0";
+      const body = JSON.stringify(req);
+      await this.conn.write(this.encoder.encode(body));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   close() {
