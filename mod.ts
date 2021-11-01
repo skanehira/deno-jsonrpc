@@ -7,7 +7,7 @@ export interface Request {
   params?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
-export interface RPCError {
+export interface Error {
   code: number;
   message: string;
   data?: unknown;
@@ -16,7 +16,7 @@ export interface RPCError {
 export interface Response<T> {
   readonly jsonrpc: "2.0";
   result?: T;
-  error?: RPCError;
+  error?: Error;
 }
 
 export class Client {
