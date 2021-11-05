@@ -52,6 +52,10 @@ export class Client {
       buf.write(p);
     }
 
+    if (buf.length === 0) {
+      throw new Error("respone body is empty")
+    }
+
     const body = this.decoder.decode(buf.bytes());
     return body;
   }
@@ -93,6 +97,7 @@ export class Client {
   }
 
   close() {
+    this.#id = 0;
     this.conn.close();
   }
 }
