@@ -38,22 +38,22 @@ export class Client {
   // returns response body as a string
   private async readResponseBody(): Promise<string> {
     const cap = 1024;
-    const p = new Uint8Array(cap);
     const buf = new io.Buffer();
     while (1) {
+      const p = new Uint8Array(cap);
       const readed = await this.conn.read(p);
-      if (readed === null || readed === 0) { // EOF
+      if (readed === null) { // EOF
         break;
       }
-      if (readed !== cap) {
-        buf.write(p.slice(0, readed));
+      if (readed < cap) {
+        await buf.write(p.slice(0, readed));
         break;
       }
-      buf.write(p);
+      await buf.write(p);
     }
 
     if (buf.length === 0) {
-      throw new Error("respone body is empty")
+      throw new Error("respone body is empty");
     }
 
     const body = this.decoder.decode(buf.bytes());
