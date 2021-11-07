@@ -37,7 +37,7 @@ export class Client {
 
   // returns response body as a string
   private async readResponseBody(): Promise<string> {
-    const cap = 1024;
+    const cap = 1024 * 30;
     const buf = new io.Buffer();
     while (1) {
       const p = new Uint8Array(cap);
